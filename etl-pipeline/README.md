@@ -68,7 +68,7 @@ Variables de entorno (`.env`):
 URI_ONTOLOGIA=https://w3id.org/OntoExhibit#
 VIRTUOSO_URL=http://localhost:8890/sparql
 VIRTUOSO_GRAPH_URI=http://localhost:8890/DAV/home/dba/rdf_sink
-VIRTUOSO_DBA_PASSWORD=dba
+VIRTUOSO_DBA_PASSWORD=CHANGE_ME_use_a_strong_password
 ```
 
 ## Ontología
