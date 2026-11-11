@@ -8,7 +8,7 @@
 #
 # No lee ningún .env: las credenciales se usan dentro de cada contenedor.
 # Variables (todas opcionales, se definen en el entorno):
-#   BACKUP_DIR          destino local               (/root/backups/complexhibit)
+#   BACKUP_DIR          destino local               ($HOME/backups/complexhibit)
 #   RETENTION_DAYS      días que se conservan       (28, ~4-5 copias semanales)
 #   MIN_FREE_GB         espacio libre mínimo para empezar (10)
 #   VIRTUOSO_CONTAINER  nombre del contenedor       (complexhibit-virtuoso)
@@ -25,7 +25,7 @@ DRY_RUN=false
 # dentro de los contenedores (variables propias de cada contenedor), de modo que
 # nunca pasan por el script ni por la línea de comandos.
 
-BACKUP_DIR="${BACKUP_DIR:-/root/backups/complexhibit}"
+BACKUP_DIR="${BACKUP_DIR:-$HOME/backups/complexhibit}"
 RETENTION_DAYS="${RETENTION_DAYS:-28}"   # backup semanal: se conserva el último mes (~4-5 copias)
 MIN_FREE_GB="${MIN_FREE_GB:-10}"         # aborta si queda menos espacio libre que esto
 VIRTUOSO_CONTAINER="${VIRTUOSO_CONTAINER:-complexhibit-virtuoso}"

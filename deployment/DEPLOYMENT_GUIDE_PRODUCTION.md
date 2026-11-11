@@ -10,11 +10,11 @@ La guía asume `docker-compose` v1 (ver el bug conocido en §2). Sustituye los m
 ## 1. Configuración
 
 ### 1.1. Certificados SSL
-`docker-compose.prod.yml` monta los certificados desde `<ruta-certificados>` (ajústala en el compose):
+`docker-compose.prod.yml` monta los certificados desde el directorio indicado en la variable **`CERTS_DIR`** de `deployment/.env`:
 - `fullchain.cer` (certificado público + cadena intermedia)
 - la clave privada correspondiente
 
-Para renovar, actualiza ese directorio y recarga nginx: `docker exec complexhibit-nginx nginx -s reload`.
+Para renovar, actualiza ese directorio (`CERTS_DIR`) y recarga nginx: `docker exec complexhibit-nginx nginx -s reload`.
 
 ### 1.2. Variables de entorno (`deployment/.env`)
 El backend lee `deployment/.env` (`env_file: .env`). Parte de `.env.template` (raíz del repo) y **no lo subas nunca a git**. Variables clave:
@@ -28,7 +28,11 @@ FRONTEND_URL=https://<tu-dominio>
 # Base de datos / Virtuoso (localhost por red host)
 VIRTUOSO_URL=http://localhost:8890/sparql
 
+# Certificados TLS (obligatoria): directorio con fullchain.cer y la clave privada
+CERTS_DIR=<ruta-certificados>
+
 # Seguridad (CAMBIAR todos en producción; usa valores largos y aleatorios)
+# POSTGRES_PASSWORD es obligatoria: el compose no arranca sin ella
 JWT_SECRET=<clave_larga_y_aleatoria>
 VIRTUOSO_DBA_PASSWORD=<segura>
 POSTGRES_PASSWORD=<segura>

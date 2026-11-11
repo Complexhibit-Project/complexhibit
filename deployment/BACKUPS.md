@@ -8,7 +8,7 @@ Script: [`backup.sh`](backup.sh). Hace una copia de:
 | PostgreSQL | base de usuarios y autenticación | `postgres_<db>.sql.gz` |
 
 Cada copia incluye `SHA256SUMS` y se guarda en `$BACKUP_DIR/<AAAAMMDD_HHMMSS>/`
-(por defecto `/root/backups/complexhibit/`). Tamaño medido: ~156 MB por copia.
+(por defecto `$HOME/backups/complexhibit/`, configurable con `BACKUP_DIR`). Tamaño medido: ~156 MB por copia.
 
 ## Programación
 
@@ -34,7 +34,7 @@ corrupción de datos, pero no frente a la pérdida del servidor. Para replicarla
 **Desde la máquina de destino** (recomendado), con acceso SSH al servidor:
 
 ```bash
-rsync -av -e "ssh -p <puerto>" <usuario>@<servidor>:/root/backups/complexhibit/ /ruta/local/backups/
+rsync -av -e "ssh -p <puerto>" <usuario>@<servidor>:<BACKUP_DIR>/ /ruta/local/backups/
 ```
 
 **Desde el servidor**, tras cada copia, definiendo `REMOTE_TARGET` en el entorno del cron:
