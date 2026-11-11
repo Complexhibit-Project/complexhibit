@@ -21,7 +21,10 @@ Copia semanal (domingos 03:00), conservando las de los últimos 28 días (~5 cop
 - Si queda menos de `MIN_FREE_GB` (10 GB) de espacio libre, el script aborta sin escribir nada.
 - Solo borra carpetas con nombre de fecha más antiguas que `RETENTION_DAYS`.
 - `./backup.sh --dry-run` muestra lo que haría sin escribir nada.
-- No lee ningún `.env`: el `checkpoint` de Virtuoso usa la contraseña del propio contenedor.
+- No lee ningún `.env`: el `checkpoint` de Virtuoso usa la contraseña DBA guardada en un archivo `chmod 600`
+  (`$HOME/.complexhibit/virtuoso_dba_password`, o `VIRTUOSO_DBA_PASSWORD_FILE`), enviada por stdin al contenedor.
+  Si el archivo no existe, usa la variable `DBA_PASSWORD` del contenedor. Si cambias la contraseña DBA,
+  actualiza también ese archivo.
 
 Variables opcionales: `BACKUP_DIR`, `RETENTION_DAYS`, `MIN_FREE_GB`, `VIRTUOSO_CONTAINER`,
 `POSTGRES_CONTAINER`, `VIRTUOSO_VOLUME`, `RESULT_NT`, `REMOTE_TARGET`.

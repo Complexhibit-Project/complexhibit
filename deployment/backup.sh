@@ -6,7 +6,7 @@
 # Uso:  ./backup.sh            -> hace la copia y aplica la retención
 #       ./backup.sh --dry-run  -> muestra lo que haría sin escribir nada
 #
-# No lee ningún .env: las credenciales se usan dentro de cada contenedor.
+# No lee ningún .env. La contraseña DBA de Virtuoso se lee de un archivo chmod 600 (ver abajo).
 # Variables (todas opcionales, se definen en el entorno):
 #   BACKUP_DIR          destino local               ($HOME/backups/complexhibit)
 #   RETENTION_DAYS      días que se conservan       (28, ~4-5 copias semanales)
@@ -14,6 +14,7 @@
 #   VIRTUOSO_CONTAINER  nombre del contenedor       (complexhibit-virtuoso)
 #   POSTGRES_CONTAINER  nombre del contenedor       (complexhibit-postgres)
 #   VIRTUOSO_VOLUME     volumen Docker de Virtuoso  (deployment_virtuoso-data)
+#   VIRTUOSO_DBA_PASSWORD_FILE  archivo (chmod 600) con la contraseña DBA ($HOME/.complexhibit/virtuoso_dba_password)
 #   RESULT_NT           ruta de result.nt a incluir si existe (vacío = omitir)
 #   REMOTE_TARGET       destino rsync opcional, p.ej. usuario@host:/ruta/backups/
 set -euo pipefail
@@ -70,11 +71,24 @@ fi
 
 # 2) Virtuoso: checkpoint (vuelca el log de transacciones a virtuoso.db) y copia de la base
 log "Virtuoso: checkpoint"
-# La contraseña DBA se resuelve dentro del contenedor ($DBA_PASSWORD), sin pasar por este script
-if docker exec "$VIRTUOSO_CONTAINER" sh -c '[ -n "$DBA_PASSWORD" ]'; then
-    run docker exec "$VIRTUOSO_CONTAINER" sh -c 'isql 1111 dba "$DBA_PASSWORD" "exec=checkpoint;"' >/dev/null
+# La contraseña DBA se lee de un archivo legible solo por su propietario (por defecto
+# $HOME/.complexhibit/virtuoso_dba_password) y se envía por stdin al contenedor, sin pasar por
+# la línea de comandos del host. Si el archivo no existe, se usa $DBA_PASSWORD del contenedor.
+PW_FILE="${VIRTUOSO_DBA_PASSWORD_FILE:-$HOME/.complexhibit/virtuoso_dba_password}"
+if $DRY_RUN; then
+    echo "  (dry-run) checkpoint de Virtuoso"
+elif [[ -r "$PW_FILE" ]]; then
+    if docker exec -i "$VIRTUOSO_CONTAINER" sh -c 'read -r PW; isql 1111 dba "$PW" "exec=checkpoint;"' < "$PW_FILE" >/dev/null 2>&1; then
+        log "Virtuoso: checkpoint correcto"
+    else
+        log "AVISO: el checkpoint falló (¿contraseña de $PW_FILE obsoleta?); la copia puede perder las últimas escrituras"
+    fi
+elif docker exec "$VIRTUOSO_CONTAINER" sh -c '[ -n "$DBA_PASSWORD" ]'; then
+    docker exec "$VIRTUOSO_CONTAINER" sh -c 'isql 1111 dba "$DBA_PASSWORD" "exec=checkpoint;"' >/dev/null 2>&1 \
+        && log "Virtuoso: checkpoint correcto" \
+        || log "AVISO: el checkpoint falló; la copia puede perder las últimas escrituras"
 else
-    log "AVISO: el contenedor no define DBA_PASSWORD; se omite el checkpoint (la copia puede perder las últimas escrituras)"
+    log "AVISO: sin contraseña DBA disponible; se omite el checkpoint"
 fi
 log "Virtuoso: copia de virtuoso.db"
 if ! $DRY_RUN; then
