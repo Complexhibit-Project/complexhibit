@@ -69,3 +69,7 @@ result.nt
 # Agent
 .agent/
 .agents/
+
+# La ontologia OntoExhibit SI se versiona (el resto de .rdf/.owl/.nt se ignora)
+!etl-pipeline/ontology/
+!etl-pipeline/ontology/ontoExhibit.rdf
