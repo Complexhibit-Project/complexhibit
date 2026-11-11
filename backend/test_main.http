@@ -1,0 +1,155 @@
+### Complexhibit API - HTTP Tests
+### Use with VS Code REST Client extension or similar tools
+
+@baseUrl = http://localhost:8000/api/v1
+@token = your-jwt-token-here
+
+### Health Check - Root Endpoint
+GET {{baseUrl}}/
+Accept: application/json
+
+### ============================================
+### PERSONAS (Persons)
+### ============================================
+
+### Get all persons
+GET {{baseUrl}}/all_personas
+Accept: application/json
+
+### Count actants
+GET {{baseUrl}}/count_actants
+Accept: application/json
+
+### Get person by ID
+GET {{baseUrl}}/get_persona/human%20actant/abc123
+Accept: application/json
+
+### Create new person
+POST {{baseUrl}}/post_persona
+Content-Type: application/json
+
+{
+  "name": "Pablo Picasso",
+  "type": "Individual",
+  "country": "Spain",
+  "birth_date": "25/10/1881",
+  "death_date": "08/04/1973",
+  "activity": ["Painter", "Sculptor"],
+  "gender": "Male"
+}
+
+### ============================================
+### INSTITUCIONES (Institutions)
+### ============================================
+
+### Get all institutions
+GET {{baseUrl}}/all_instituciones
+Accept: application/json
+
+### Count institutions
+GET {{baseUrl}}/count_instituciones
+Accept: application/json
+
+### Get institution by ID
+GET {{baseUrl}}/get_institucion/institution/xyz789
+Accept: application/json
+
+### Create new institution
+POST {{baseUrl}}/post_institucion
+Content-Type: application/json
+
+{
+  "nombre": "Museo Reina Sofía",
+  "type": "Museum",
+  "ciudad": "Madrid",
+  "pais": "Spain"
+}
+
+### ============================================
+### EXPOSICIONES (Exhibitions)
+### ============================================
+
+### Get all exhibitions
+GET {{baseUrl}}/all_exposiciones
+Accept: application/json
+
+### Count exhibitions
+GET {{baseUrl}}/count_exposiciones
+Accept: application/json
+
+### Create new exhibition
+POST {{baseUrl}}/post_exposicion
+Content-Type: application/json
+
+{
+  "name": "Picasso: The Early Years",
+  "fecha_inicio": "01/01/2024",
+  "fecha_fin": "31/03/2024",
+  "lugar_celebracion": "Madrid"
+}
+
+### ============================================
+### OBRAS (Artworks)
+### ============================================
+
+### Get all artworks
+GET {{baseUrl}}/all_obras
+Accept: application/json
+
+### Count artworks
+GET {{baseUrl}}/count_obras
+Accept: application/json
+
+### Create new artwork
+POST {{baseUrl}}/post_obra
+Content-Type: application/json
+
+{
+  "name": "Guernica",
+  "type": "Painting",
+  "fecha_creacion": "01/06/1937"
+}
+
+### ============================================
+### SEARCH & MISC
+### ============================================
+
+### Semantic search
+GET {{baseUrl}}/semantic_search?q=picasso
+Accept: application/json
+
+### Get all ontology classes
+GET {{baseUrl}}/all_classes
+Accept: application/json
+
+### Get object by type and ID
+GET {{baseUrl}}/get_object_any_type/persona/abc123
+Accept: application/json
+
+### ============================================
+### AUTHENTICATION (Protected Endpoints)
+### ============================================
+
+### Get current user (requires authentication)
+GET {{baseUrl}}/users/me
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Secure endpoint example
+GET {{baseUrl}}/secure-endpoint
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### ============================================
+### DOCUMENTATION
+### ============================================
+
+### OpenAPI JSON
+GET {{baseUrl}}/openapi.json
+Accept: application/json
+
+### Swagger UI (open in browser)
+# GET {{baseUrl}}/docs
+
+### ReDoc (open in browser)
+# GET {{baseUrl}}/redoc

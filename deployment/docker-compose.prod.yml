@@ -1,0 +1,100 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: complexhibit-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /root/certificados/current:/etc/nginx/certs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+  backend:
+    build:
+      context: ../backend
+      network: host
+    container_name: complexhibit-api
+    env_file:
+      - .env
+    environment:
+      - VIRTUOSO_URL=http://localhost:8890/sparql
+      - DEFAULT_GRAPH_URL=${DEFAULT_GRAPH_URL}
+      - VIRTUOSO_PASSWORD=${VIRTUOSO_DBA_PASSWORD}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-complexhibit}:${POSTGRES_PASSWORD:-complexhibit}@127.0.0.1:5432/${POSTGRES_DB:-complexhibit_auth}
+      - DEPLOY_PATH=/api/v1
+    volumes:
+      - ../backend/app:/app/app
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    network_mode: host
+  frontend:
+    build:
+      context: ../frontend
+      network: host
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: complexhibit-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - API_URL=${API_URL}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    network_mode: host
+  virtuoso:
+    image: openlink/virtuoso-opensource-7:latest
+    container_name: complexhibit-virtuoso
+    environment:
+      - DBA_PASSWORD=${VIRTUOSO_DBA_PASSWORD:-dba}
+      - SPARQL_UPDATE=true
+    volumes:
+      - virtuoso-data:/database
+      - ../backend/virtuoso.ini:/database/virtuoso.ini
+      - ../backend/result.nt:/database/result.nt:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    network_mode: host
+  postgres:
+    image: postgres:16-alpine
+    container_name: complexhibit-postgres
+    # Bind to loopback only (no host firewall here): the host-networked backend
+    # reaches it via 127.0.0.1; external access (incl. public IPv6) is removed.
+    command: postgres -c listen_addresses=127.0.0.1
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-complexhibit}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-complexhibit}
+      - POSTGRES_DB=${POSTGRES_DB:-complexhibit_auth}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    network_mode: host
+volumes:
+  virtuoso-data:
+    driver: local
+  postgres-data:
+    driver: local

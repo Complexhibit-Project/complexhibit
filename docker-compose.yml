@@ -1,0 +1,142 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      network: host
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+    container_name: complexhibit-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    environment:
+      # Solo sobrescribir valores que son diferentes en contexto Docker
+      - VIRTUOSO_URL=http://virtuoso:8890/sparql
+      # Credenciales que el backend usa para autenticar UPDATE (INSERT/DELETE) contra /sparql-auth
+      - VIRTUOSO_USER=dba
+      - VIRTUOSO_PASSWORD=${VIRTUOSO_DBA_PASSWORD}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DEPLOY_PATH=/api/v1
+      - PYTHONUNBUFFERED=1
+      # Force SMTP config from env file
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      # Admin
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
+      # URLs & Ontology
+      - FRONTEND_URL=${FRONTEND_URL}
+      - URI_ONTOLOGIA=${URI_ONTOLOGIA}
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      - virtuoso
+      - postgres
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - complexhibit-network
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/v1/')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      network: host
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+    container_name: complexhibit-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - complexhibit-network
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - API_URL=${API_URL}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  virtuoso:
+    image: openlink/virtuoso-opensource-7:latest
+    container_name: complexhibit-virtuoso
+    ports:
+      - "8890:8890"
+      - "1111:1111"
+    environment:
+      - DBA_PASSWORD=${VIRTUOSO_DBA_PASSWORD}
+      - SPARQL_UPDATE=true
+      - DEFAULT_GRAPH=http://localhost:8890/DAV/home/dba/rdf_sink
+    volumes:
+      - virtuoso-data:/database
+      - ./backend/virtuoso.ini:/database/virtuoso.ini
+      - ./backend/result.nt:/database/result.nt:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - complexhibit-network
+    healthcheck:
+      test: ["CMD-SHELL", "isql 1111 dba \"$$DBA_PASSWORD\" exec=status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: complexhibit-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - complexhibit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  virtuoso-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+networks:
+  complexhibit-network:
+    driver: bridge
