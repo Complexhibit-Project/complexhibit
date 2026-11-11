@@ -76,6 +76,7 @@ Consulta [frontend/README.md](frontend/README.md) para instrucciones detalladas 
 
 ## Licencia
 
-Este software es propietario y pertenece a **iArtHis Lab**. © 2025 iArtHis Lab. Todos los derechos reservados.
+- **Código fuente**: [MIT](LICENSE) © 2025 iArtHis Lab y Martín Jerónimo Salvachúa Galimberti.
+- **Ontología OntoExhibit** (`etl-pipeline/ontology/ontoExhibit.rdf`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), licencia declarada en el propio archivo.
 
-Para consultas sobre licencias, contacta a iArtHis Lab.
+Para consultas sobre licencias o colaboración, abre una incidencia en este repositorio o contacta con los autores.
